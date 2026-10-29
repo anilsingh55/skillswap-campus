@@ -1,0 +1,6 @@
+{
+  "name": "SkillSwap Campus",
+  "description": "Peer-to-peer student skill exchange network connecting college students to teach what they know and learn what they need for free.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

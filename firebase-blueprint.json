@@ -1,0 +1,77 @@
+{
+  "entities": {
+    "Student": {
+      "title": "Student Profile",
+      "description": "Public and campus profile details for a participating college student",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "name": { "type": "string", "maxLength": 100 },
+        "college": { "type": "string", "maxLength": 120 },
+        "major": { "type": "string", "maxLength": 100 },
+        "gradYear": { "type": "number" },
+        "bio": { "type": "string", "maxLength": 1000 },
+        "skillsOffered": { "type": "array" },
+        "skillsWanted": { "type": "array" },
+        "availability": { "type": "array" },
+        "preferredFormat": { "type": "string", "maxLength": 60 },
+        "learningGoals": { "type": "string", "maxLength": 500 },
+        "reputationScore": { "type": "number" },
+        "completedSwapsCount": { "type": "number" },
+        "hoursExchanged": { "type": "number" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "name", "college", "skillsOffered", "skillsWanted"]
+    },
+    "SessionRequest": {
+      "title": "Skill Swap Request",
+      "description": "Session request between two college students",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "senderId": { "type": "string", "maxLength": 128 },
+        "senderName": { "type": "string", "maxLength": 100 },
+        "receiverId": { "type": "string", "maxLength": 128 },
+        "receiverName": { "type": "string", "maxLength": 100 },
+        "skillOffered": { "type": "string", "maxLength": 100 },
+        "skillWanted": { "type": "string", "maxLength": 100 },
+        "status": { "type": "string", "enum": ["pending", "accepted", "rejected", "cancelled", "completed"] },
+        "proposedDate": { "type": "string", "maxLength": 120 },
+        "sessionFormat": { "type": "string", "maxLength": 60 },
+        "message": { "type": "string", "maxLength": 1000 },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "senderId", "receiverId", "skillOffered", "skillWanted", "status"]
+    },
+    "Review": {
+      "title": "Peer Review",
+      "description": "Review and rating left by a student after a swap",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "requestId": { "type": "string", "maxLength": 128 },
+        "reviewerId": { "type": "string", "maxLength": 128 },
+        "revieweeId": { "type": "string", "maxLength": 128 },
+        "rating": { "type": "number" },
+        "feedback": { "type": "string", "maxLength": 1000 },
+        "skillTaught": { "type": "string", "maxLength": 100 },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "requestId", "reviewerId", "revieweeId", "rating", "feedback"]
+    }
+  },
+  "firestore": {
+    "/students/{studentId}": {
+      "schema": "#/entities/Student",
+      "description": "Student profiles across colleges"
+    },
+    "/requests/{requestId}": {
+      "schema": "#/entities/SessionRequest",
+      "description": "Skill exchange requests and scheduled sessions"
+    },
+    "/reviews/{reviewId}": {
+      "schema": "#/entities/Review",
+      "description": "Peer reviews and ratings"
+    }
+  }
+}

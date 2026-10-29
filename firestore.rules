@@ -1,0 +1,105 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Default deny-all gate
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() > 0 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    // Students Collection
+    match /students/{studentId} {
+      allow get: if isSignedIn() && isValidId(studentId);
+      allow list: if isSignedIn();
+
+      allow create: if isSignedIn() 
+        && isValidId(studentId)
+        && request.auth.uid == studentId
+        && incoming().name is string && incoming().name.size() <= 100
+        && incoming().college is string && incoming().college.size() <= 120
+        && incoming().skillsOffered is list && incoming().skillsOffered.size() <= 30
+        && incoming().skillsWanted is list && incoming().skillsWanted.size() <= 30;
+
+      allow update: if isSignedIn() 
+        && isValidId(studentId)
+        && request.auth.uid == studentId
+        && incoming().diff(existing()).affectedKeys().hasOnly([
+          'name', 'college', 'major', 'gradYear', 'bio', 
+          'skillsOffered', 'skillsWanted', 'availability', 
+          'preferredFormat', 'learningGoals', 'privacy',
+          'reputationScore', 'completedSwapsCount', 'hoursExchanged'
+        ]);
+
+      allow delete: if false; // Profiles are deactivated or archived, not deleted directly
+    }
+
+    // Session Requests Collection
+    match /requests/{requestId} {
+      allow get: if isSignedIn() && isValidId(requestId) && (
+        resource.data.senderId == request.auth.uid || 
+        resource.data.receiverId == request.auth.uid
+      );
+
+      allow list: if isSignedIn() && (
+        resource.data.senderId == request.auth.uid || 
+        resource.data.receiverId == request.auth.uid
+      );
+
+      allow create: if isSignedIn() 
+        && isValidId(requestId)
+        && incoming().senderId == request.auth.uid
+        && incoming().status == 'pending'
+        && incoming().skillOffered is string && incoming().skillOffered.size() <= 100
+        && incoming().skillWanted is string && incoming().skillWanted.size() <= 100;
+
+      allow update: if isSignedIn() 
+        && isValidId(requestId)
+        && (resource.data.senderId == request.auth.uid || resource.data.receiverId == request.auth.uid)
+        && incoming().diff(existing()).affectedKeys().hasOnly([
+          'status', 'updatedAt', 'responseNote', 'completedAt', 'locationDetails', 'proposedDate'
+        ]);
+
+      allow delete: if false;
+    }
+
+    // Reviews Collection
+    match /reviews/{reviewId} {
+      allow get, list: if isSignedIn() && isValidId(reviewId);
+
+      allow create: if isSignedIn()
+        && isValidId(reviewId)
+        && incoming().reviewerId == request.auth.uid
+        && incoming().rating is number && incoming().rating >= 1 && incoming().rating <= 5
+        && incoming().feedback is string && incoming().feedback.size() <= 1000;
+
+      allow update, delete: if false; // Reviews are immutable once submitted
+    }
+
+    // Reports Collection (Write-only for reporter)
+    match /reports/{reportId} {
+      allow create: if isSignedIn()
+        && isValidId(reportId)
+        && incoming().reporterId == request.auth.uid
+        && incoming().details is string && incoming().details.size() <= 2000;
+
+      allow read, update, delete: if false; // Only accessible via administrative tools
+    }
+  }
+}
